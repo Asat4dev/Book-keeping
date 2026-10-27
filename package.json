@@ -1,0 +1,12 @@
+{
+  "name": "main-project",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix Main-Project-- run dev",
+    "build": "npm --prefix Main-Project-- run build"
+  },
+  "dependencies": {
+    "firebase": "^13.0.0",
+    "react-router-dom": "^7.18.4"
+  }
+}
