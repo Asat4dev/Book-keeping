@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import { auth } from '../firebase'
+import { auth } from '../../firebase'
 import Sidebar from './Sidebar'
 import Header from './Header'
 

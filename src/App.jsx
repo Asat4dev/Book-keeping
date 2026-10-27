@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from './firebase'
+import { auth } from '../firebase'
 
 // Public Auth Pages
 import Landing from './pages/Landing'
