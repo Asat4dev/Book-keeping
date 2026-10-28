@@ -1,8 +1,10 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import StatCard from '../components/StatCard'
+import { useAppContext } from '../store/AppContext'
 
-export default function Dashboard({ user }) {
+export default function Dashboard() {
+  const { user } = useAppContext()
   const userName = user?.displayName || user?.email?.split('@')[0] || 'User'
 
   // Initial stats are empty ($0) so you can enter your own records

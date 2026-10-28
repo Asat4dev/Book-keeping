@@ -1,36 +1,62 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore'
+import { db } from '../../firebase'
 import StatCard from '../components/StatCard'
+import { useAppContext } from '../store/AppContext'
 
 export default function Receipts() {
-  // Empty state - user enters all receipts themselves
+  const { user } = useAppContext()
   const [receipts, setReceipts] = useState([])
+  const [error, setError] = useState('')
 
   const [merchant, setMerchant] = useState('')
   const [category, setCategory] = useState('Software')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
 
-  const handleAddReceipt = (e) => {
+  useEffect(() => {
+    if (!user) return
+
+    const receiptsRef = collection(db, 'users', user.uid, 'receipts')
+    return onSnapshot(query(receiptsRef, orderBy('createdAt', 'desc')), (snapshot) => {
+      setReceipts(snapshot.docs.map((receiptDoc) => ({ id: receiptDoc.id, ...receiptDoc.data() })))
+      setError('')
+    }, (loadError) => {
+      console.error('Failed to load receipts:', loadError)
+      setError('Could not load receipts. Please try again.')
+    })
+  }, [user])
+
+  const handleAddReceipt = async (e) => {
     e.preventDefault()
     if (!merchant || !amount) return
 
-    setReceipts([
-      {
-        id: 'REC-' + Math.floor(Math.random() * 900 + 100),
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'receipts'), {
         merchant,
         category,
         amount: Number(amount),
         date,
-      },
-      ...receipts,
-    ])
-
-    setMerchant('')
-    setAmount('')
+        recordId: 'REC-' + Math.floor(Math.random() * 900 + 100),
+        createdAt: serverTimestamp(),
+      })
+      setMerchant('')
+      setAmount('')
+      setError('')
+    } catch (saveError) {
+      console.error('Failed to save receipt:', saveError)
+      setError('Could not save this receipt. Please try again.')
+    }
   }
 
-  const handleDeleteReceipt = (id) => {
-    setReceipts(receipts.filter((r) => r.id !== id))
+  const handleDeleteReceipt = async (id) => {
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'receipts', id))
+      setError('')
+    } catch (deleteError) {
+      console.error('Failed to delete receipt:', deleteError)
+      setError('Could not delete this receipt. Please try again.')
+    }
   }
 
   const totalReceiptsAmount = receipts.reduce((sum, r) => sum + r.amount, 0)
@@ -43,6 +69,8 @@ export default function Receipts() {
         </h2>
         <p className="text-sm text-gray-500">Expense proofs and vouchers</p>
       </div>
+
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard
@@ -146,7 +174,7 @@ export default function Receipts() {
             <tbody className="divide-y divide-gray-100">
               {receipts.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50 transition">
-                  <td className="py-2.5 text-xs text-gray-400">{r.id}</td>
+                  <td className="py-2.5 text-xs text-gray-400">{r.recordId || r.id}</td>
                   <td className="py-2.5 font-medium text-gray-900">{r.merchant}</td>
                   <td className="py-2.5 text-xs text-gray-500">{r.category}</td>
                   <td className="py-2.5 text-gray-400 text-xs hidden sm:table-cell">{r.date}</td>

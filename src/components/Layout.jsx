@@ -4,8 +4,10 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../../firebase'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import { useAppContext } from '../store/AppContext'
 
-export default function Layout({ user }) {
+export default function Layout() {
+  const { user } = useAppContext()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()

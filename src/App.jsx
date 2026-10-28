@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../firebase'
+import { AppProvider, useAppContext } from './store/AppContext'
 
 // Public Auth Pages
 import Landing from './pages/Landing'
@@ -19,30 +17,23 @@ import Invoices from './pages/Invoices'
 import Receipts from './pages/Receipts'
 import Catalog from './pages/Catalog'
 
-export default function App() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  // Firebase auth state check
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser)
-      setLoading(false)
-    })
-    return () => unsubscribe()
-  }, [])
-
-  // Simple loading screen
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm text-gray-500 font-medium">Loading...</p>
-        </div>
+// Loading screen
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm text-gray-500 font-medium">Loading...</p>
       </div>
-    )
-  }
+    </div>
+  )
+}
+
+// Inner app — reads user from context, no prop drilling
+function AppRoutes() {
+  const { user, loading } = useAppContext()
+
+  if (loading) return <LoadingScreen />
 
   return (
     <Routes>
@@ -62,9 +53,9 @@ export default function App() {
 
       {/* App Pages inside Layout (Protected) */}
       <Route
-        element={user ? <Layout user={user} /> : <Navigate to="/login" replace />}
+        element={user ? <Layout /> : <Navigate to="/login" replace />}
       >
-        <Route path="/dashboard" element={<Dashboard user={user} />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/invoices" element={<Invoices />} />
@@ -75,5 +66,13 @@ export default function App() {
       {/* Redirect any other link */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <AppRoutes />
+    </AppProvider>
   )
 }
