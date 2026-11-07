@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import StatCard from '../components/StatCard'
+import Chart from '../components/Chart'
 import { useAppContext } from '../store/AppContext'
 
 export default function Dashboard() {
@@ -58,6 +59,9 @@ export default function Dashboard() {
           />
         ))}
       </div>
+
+      {/* Revenue Chart */}
+      <Chart title="Monthly Revenue" />
 
       {/* Quick Navigation Cards */}
       <div>
