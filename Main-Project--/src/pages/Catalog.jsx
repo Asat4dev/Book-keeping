@@ -1,34 +1,59 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore'
+import { db } from '../../firebase'
 import StatCard from '../components/StatCard'
+import { useAppContext } from '../store/AppContext'
 
 export default function Catalog() {
-  // Empty state - user adds all their own products/services
+  const { user } = useAppContext()
   const [catalog, setCatalog] = useState([])
+  const [error, setError] = useState('')
 
   const [name, setName] = useState('')
   const [category, setCategory] = useState('Services')
   const [price, setPrice] = useState('')
 
-  const handleAddItem = (e) => {
+  useEffect(() => {
+    if (!user) return
+
+    const catalogRef = collection(db, 'users', user.uid, 'catalog')
+    return onSnapshot(query(catalogRef, orderBy('createdAt', 'desc')), (snapshot) => {
+      setCatalog(snapshot.docs.map((catalogDoc) => ({ id: catalogDoc.id, ...catalogDoc.data() })))
+      setError('')
+    }, (loadError) => {
+      console.error('Failed to load catalog:', loadError)
+      setError('Could not load catalog. Please try again.')
+    })
+  }, [user])
+
+  const handleAddItem = async (e) => {
     e.preventDefault()
     if (!name || !price) return
 
-    setCatalog([
-      {
-        id: 'CAT-' + Math.floor(Math.random() * 900 + 100),
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'catalog'), {
         name,
         category,
         price: Number(price),
-      },
-      ...catalog,
-    ])
-
-    setName('')
-    setPrice('')
+        createdAt: serverTimestamp(),
+      })
+      setName('')
+      setPrice('')
+      setError('')
+    } catch (saveError) {
+      console.error('Failed to save catalog item:', saveError)
+      setError('Could not save this item. Please try again.')
+    }
   }
 
-  const handleDeleteItem = (id) => {
-    setCatalog(catalog.filter((item) => item.id !== id))
+  const handleDeleteItem = async (id) => {
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'catalog', id))
+      setError('')
+    } catch (deleteError) {
+      console.error('Failed to delete catalog item:', deleteError)
+      setError('Could not delete this item. Please try again.')
+    }
   }
 
   // Get unique categories from catalog
@@ -42,6 +67,8 @@ export default function Catalog() {
         </h2>
         <p className="text-sm text-gray-500">Products and services catalog</p>
       </div>
+
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard

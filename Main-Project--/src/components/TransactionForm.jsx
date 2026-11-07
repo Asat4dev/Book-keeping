@@ -11,7 +11,6 @@ export default function TransactionForm({ onAddTransaction }) {
     if (!description || !amount) return
 
     onAddTransaction({
-      id: 'TX-' + Math.floor(Math.random() * 900 + 100),
       description,
       type,
       amount: Number(amount),

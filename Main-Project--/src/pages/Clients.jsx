@@ -1,36 +1,61 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore'
+import { db } from '../../firebase'
 import StatCard from '../components/StatCard'
+import { useAppContext } from '../store/AppContext'
 
 export default function Clients() {
-  // Empty state - user adds all clients
+  const { user } = useAppContext()
   const [clients, setClients] = useState([])
+  const [error, setError] = useState('')
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
 
-  const handleAddClient = (e) => {
+  useEffect(() => {
+    if (!user) return
+
+    const clientsRef = collection(db, 'users', user.uid, 'clients')
+    return onSnapshot(query(clientsRef, orderBy('createdAt', 'desc')), (snapshot) => {
+      setClients(snapshot.docs.map((clientDoc) => ({ id: clientDoc.id, ...clientDoc.data() })))
+      setError('')
+    }, (loadError) => {
+      console.error('Failed to load clients:', loadError)
+      setError('Could not load clients. Please try again.')
+    })
+  }, [user])
+
+  const handleAddClient = async (e) => {
     e.preventDefault()
     if (!name || !email) return
 
-    setClients([
-      {
-        id: 'C-' + Math.floor(Math.random() * 900 + 100),
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'clients'), {
         name,
         email,
         phone: phone || 'N/A',
         status: 'Active',
-      },
-      ...clients,
-    ])
-
-    setName('')
-    setEmail('')
-    setPhone('')
+        createdAt: serverTimestamp(),
+      })
+      setName('')
+      setEmail('')
+      setPhone('')
+      setError('')
+    } catch (saveError) {
+      console.error('Failed to save client:', saveError)
+      setError('Could not save this client. Please try again.')
+    }
   }
 
-  const handleDeleteClient = (id) => {
-    setClients(clients.filter((c) => c.id !== id))
+  const handleDeleteClient = async (id) => {
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'clients', id))
+      setError('')
+    } catch (deleteError) {
+      console.error('Failed to delete client:', deleteError)
+      setError('Could not delete this client. Please try again.')
+    }
   }
 
   return (
@@ -41,6 +66,8 @@ export default function Clients() {
         </h2>
         <p className="text-sm text-gray-500">Manage client contacts and accounts</p>
       </div>
+
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard

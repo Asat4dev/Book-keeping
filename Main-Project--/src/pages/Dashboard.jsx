@@ -1,8 +1,11 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import StatCard from '../components/StatCard'
+import Chart from '../components/Chart'
+import { useAppContext } from '../store/AppContext'
 
-export default function Dashboard({ user }) {
+export default function Dashboard() {
+  const { user } = useAppContext()
   const userName = user?.displayName || user?.email?.split('@')[0] || 'User'
 
   // Initial stats are empty ($0) so you can enter your own records
@@ -56,6 +59,9 @@ export default function Dashboard({ user }) {
           />
         ))}
       </div>
+
+      {/* Revenue Chart */}
+      <Chart title="Monthly Revenue" />
 
       {/* Quick Navigation Cards */}
       <div>

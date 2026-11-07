@@ -29,7 +29,7 @@ export default function InvoiceTable({ invoices = [], onDeleteInvoice }) {
         <tbody className="divide-y divide-gray-100">
           {invoices.map((inv) => (
             <tr key={inv.id} className="hover:bg-gray-50 transition">
-              <td className="py-2.5 text-xs text-gray-500">{inv.id}</td>
+              <td className="py-2.5 text-xs text-gray-500">{inv.recordId || inv.id}</td>
               <td className="py-2.5 text-gray-900 font-medium">{inv.client}</td>
               <td className="py-2.5 text-gray-500 text-xs hidden sm:table-cell">{inv.date}</td>
               <td className="py-2.5 text-gray-900 font-bold">${inv.amount}</td>
